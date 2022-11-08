@@ -1,0 +1,20 @@
+experiment_name: test_v01
+
+num_classes: 3
+classes:
+  - epitheliale Tumorzelle
+  - Erythrozyt
+  - Lymphoma
+
+common_config:
+  model_name: "vgg16"
+  cp_weight: 0.8
+  lr: 0.00005
+  early_stopping_metrics: [ "bal_acc" ]
+  split_file: "test_data/split_file.json"
+  num_epochs: 2
+  batch_size: 2
+
+config_updates:
+  '0':
+    seed: 928374
