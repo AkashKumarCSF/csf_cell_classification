@@ -10,7 +10,7 @@ smk_dir = "test_data/out/smk"
 # Not configurable
 fs_observer_dir = Path(smk_dir) / "runs"
 data_root = "test_data/data_root/"
-group_by = "test_data/supplementary_table.ods"
+group_by = "test_data/supplementary_table_sample.ods"
 preprocessing_log = Path(smk_dir) / "preprocessing_log.csv"
 
 # Configurable
@@ -51,7 +51,7 @@ rule crop_tiles:
           preprocessing_log,
           file_stats_all_classes
     shell:
-         "python run_preprocessing.py --statsfile {file_stats_all_classes} --datapath {params.data_dir} --group-by-cases $'{input}' --padding"
+         "python run_preprocessing.py --statsfile {file_stats_all_classes} --datapath {params.data_dir} --group-by-cases $'{input}' --padding --model-name {params.model_name}"
 
 rule subset_crops:
     """Create subset of samples based on selected classes that should be used for training."""

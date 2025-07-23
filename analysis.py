@@ -268,6 +268,8 @@ Tuple[
                 sorted(labels_orig),
                 class_groups)
             classes_grouped = list(class_int_mapping.keys())
+            print("classes_grouped: {}".format(classes_grouped))
+            print("classes: {}".format(classes))
             assert set(classes) == set(classes_grouped)
 
             confmat = conf_mat_with_subclasses(y_true, df["pred-fold0"],
