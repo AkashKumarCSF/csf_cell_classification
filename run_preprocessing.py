@@ -113,24 +113,34 @@ def save_crop(dest: Path, img, points, cropsize: int):
 
 def main(args):
     files = find_files(args.datapath)
+    print("args: {}".format(args))
+    print('Model: ', args.model_name)
+    print("group by case: ", args.group_by_cases)
+    if args.model_name=="vit_base_patch16_224":
+        args.cropsize = 224
     if args.group_by_cases is None:
         stats = pd.DataFrame()
     else:
         liquor_to_case = get_case_mapping(args.group_by_cases)
-        stats = pd.DataFrame(
-            index=sorted(set(liquor_to_case.values()))).rename_axis('Case',
+        stats = pd.DataFrame(0,
+            index=sorted(set(liquor_to_case.values())), columns=[]).rename_axis('Case',
                                                                     axis=0)
     log = pd.DataFrame(
         columns=['src', 'dest', 'class', 'x', 'y', 'inside_borders'])
 
     out_path = str(Path(args.statsfile).parent)
     dry_run = args.dry_run
+
+    print("out_path: ", out_path)
     if dry_run:
         print(f"Would save to {out_path}")
     else:
         os.makedirs(out_path, exist_ok=True)
 
+
+    print("files: ", files)
     for root, png_file, roi_file in tqdm(files):
+        print("Unpacking files")
         roi = etree.parse(os.path.join(root, roi_file))
         img = cv2.imread(os.path.join(root, png_file))
         if args.group_by_cases is None:
@@ -141,6 +151,7 @@ def main(args):
             case = liquor_to_case[liquor]
 
         samples = roi.findall('Sample')
+        print("samples: ", samples)
 
         if dry_run:
             tqdm.write(
@@ -167,7 +178,7 @@ def main(args):
             crop_dest = crop_dir / f'{case}_{Path(png_file).stem}-{idx}.png'
             save_crop(crop_dest, img, points, args.cropsize)
 
-            if sample_class not in stats:
+            if sample_class not in stats.columns:
                 stats[sample_class] = 0
             if case not in stats.index:
                 stats.loc[case] = 0
@@ -182,10 +193,15 @@ def main(args):
 
     stats.loc['total'] = stats.sum(axis=0)
     stats['total'] = stats.sum(axis=1)
+    #stats['total'] = stats.sum(axis=1)
+    #totals_row = stats.sum(axis=0)
+    stats.loc['total'] = totals_row
+
+
     print(stats.to_markdown())
 
     if not dry_run:
-        statsfile
+        #statsfile
         stats.to_csv(args.statsfile)
         log.to_csv(os.path.join(out_path, 'preprocessing_log.csv'))
 
@@ -205,5 +221,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--padding', dest='padding', action='store_true',
                         help='Use border reflect padding such that crops can be taken' + \
                              'that would otherwise exceed image borders.')
+    parser.add_argument('--model-name', type=str, default=None,
+                        help='Name of the model to determine preprocessing behavior.')
     args = parser.parse_args()
     main(args)

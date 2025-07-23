@@ -10,6 +10,9 @@ import local_config
 fs_observer_dir = local_config.log_dir_root
 
 if __name__ == '__main__':
+
+    print("Evaluation")
+
     try:
         smk_to_sacred_id = snakemake.input[1]
     except NameError:

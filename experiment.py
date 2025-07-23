@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 import torchvision.models
 import torchvision.transforms as transforms
+
+import timm
 from sklearn.model_selection import StratifiedKFold, GroupShuffleSplit
 
 from dataloading import GroupedImageFolder, GroupedImageFolderWithClassGroups
@@ -16,6 +18,8 @@ ex = sacred.Experiment("debug")
 
 @ex.capture
 def setup_model(model_name, pretrained, freeze_blocks, num_classes, cp_weight):
+    print(f"Loading {model_name} model...")
+
     if model_name == "efficientnetb4":
         # Not in torchvision zoo
         model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub',
@@ -23,6 +27,8 @@ def setup_model(model_name, pretrained, freeze_blocks, num_classes, cp_weight):
     elif model_name == "efficientnetb0":
         model = efficientnet_pytorch.EfficientNet.from_pretrained(
             "efficientnet-b0")
+    elif model_name == "vit_base_patch16_224":
+        model = timm.create_model('vit_base_patch16_224', pretrained=pretrained)
     else:
         model = {
             "resnet18": torchvision.models.resnet18,
@@ -60,12 +66,18 @@ def setup_model(model_name, pretrained, freeze_blocks, num_classes, cp_weight):
     elif model_name == "densenet121":
         num_features = model.classifier.in_features
         model.classifier = nn.Linear(num_features, num_classes)
+    elif model_name == "vit_base_patch16_224":
+        num_features = model.head.in_features
+        model.head = nn.Linear(num_features, num_classes)
     else:
         num_features = model.fc.in_features
         model.fc = nn.Linear(num_features, num_classes)
 
     if cp_weight is not None and cp_weight > 0:
         model = ConsistencyPriorModel(model)
+
+    #print("\nModel Summary:")
+    #print(model)
 
     return model
 
@@ -93,6 +105,8 @@ def setup_optimizer(model, lr, optimizer_type, weight_decay, momentum, scheduler
 @ex.capture
 def setup_transforms(crop_size, data_statistics, blur_probability,
                      max_blur_radius, color_jitter):
+    print("crop_size: {}".format(crop_size))
+
     class GaussianBlur:
         def __init__(self, probability, max_radius):
             self.probability = probability

@@ -1,5 +1,5 @@
 import json
-
+import argparse
 import click
 import numpy as np
 import pandas as pd
@@ -38,7 +38,10 @@ def sample(df: pd.DataFrame):
     # These classes should be non-overlapping, i.e. any case can have samples of only one of these classes
     manual_classes = ["Leucaemia", "Lymphoma", "Melanomzellen",
                       "epitheliale Tumorzelle"]
+    #manual_classes = []
     df_dropped = df.copy()
+    #print("columns: ", df_dropped.columns)
+
     for c in manual_classes:
         if c in df_dropped.columns:
             # Get cases belonging to that label
@@ -54,10 +57,12 @@ def sample(df: pd.DataFrame):
             df_dropped.drop(index=cases, errors="ignore", inplace=True)
 
     # Assert that no samples of the manual classes remain in the df
-    assert df_dropped[
-               set(manual_classes).intersection(df.columns)].values.max() == 0
-    # Assert that at least some samples were dropped
-    assert len(df_dropped) < len(df)
+    relevant_cols = list(set(manual_classes).intersection(df.columns))
+    if relevant_cols:
+        assert df_dropped[
+                   set(manual_classes).intersection(df.columns)].values.max() == 0
+        # Assert that at least some samples were dropped
+        assert len(df_dropped) < len(df)
 
     indices["test"].extend(np.random.choice(df_dropped.index,
                                             size=np.random.randint(5, 8),
@@ -80,8 +85,20 @@ def sample(df: pd.DataFrame):
     for s in splits:
         num_samples[s] = num_samples[s] / num_samples[s].sum()
 
-    jsd = jensen_shannon_divergence(num_samples.values)
+    #print("num_samples: {}".format(num_samples))
+    missing_classes = num_samples[(num_samples == 0).any(axis=1)]
 
+    #print("\n✅ Class presence in each split:")
+    for split in splits:
+        present_classes = df.loc[indices[split]].sum(axis=0)
+        present_classes = present_classes[present_classes > 0].index.tolist()
+        #print(f"{split.capitalize()} split: {present_classes}")
+
+    #if not missing_classes.empty:
+    #    print("⚠️ Classes with 0 samples in at least one split:")
+    #    print(missing_classes)
+
+    jsd = jensen_shannon_divergence(num_samples.values)
     return jsd, indices, num_samples
 
 
@@ -130,8 +147,16 @@ def random_split_grouped(file_stats: str, file_best_indices: str,
     file_indices: All valid partitions are stored to this file long with their JSD (YAML format).
     plot_file : If not None, plot the class histogram to this file.
     """
+    print("file_stats: ", file_stats)
+    print("file_best_indices: ", file_best_indices)
+    print("num_trials: ", num_trials)
+    print("file_indices: ", file_indices)
+    print("plot_file: ", plot_file)
 
+    print("Loading data...")
     df = load_stats(file_stats)
+
+    #df = load_stats(file_stats)
     best_indices = None
     best_jsd = np.inf
 
@@ -139,7 +164,10 @@ def random_split_grouped(file_stats: str, file_best_indices: str,
     valid_indices = list()
     for i in tqdm(range(int(num_trials))):
         jsd, indices, num_samples = sample(df.copy())
+        #print("jsd: ", jsd)
+
         if not np.isnan(jsd):
+            print("jsd: ", jsd)
             tqdm.write(f"{jsd:.5f} (current best: {best_jsd:.5f})")
             valid_indices.append({**indices, "jsd": str(jsd), "iteration": i})
             if jsd < best_jsd:

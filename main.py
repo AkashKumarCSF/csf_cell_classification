@@ -9,8 +9,8 @@ local_config.setup_logger(ex)
 @ex.config
 def config():
     tags = []  # Omniboard tags
-    num_epochs = 100
-    batch_size = 128
+    num_epochs = 50
+    batch_size = 32
     lr = 5e-5
     scheduler_type = "step"
     scheduler_kwargs = {
@@ -27,12 +27,12 @@ def config():
     momentum = 0.9
     shuffle = True
     xval_interval = 1
-    num_classes = 10
-    reweight_classes = True
+    num_classes = 15
+    reweight_classes = False
     early_stopping_metrics = ["auc"]
-    patience = 20
+    patience = 5
 
-    model_name = "resnet18"
+    model_name = "vit_base_patch16_224"   # "resnet18"
     pretrained = True
     freeze_blocks = None
     cp_weight = 0
@@ -41,12 +41,12 @@ def config():
     data_root = None
     group_samples = None
     img_size = 224
-    crop_size = 224 // 2
+    crop_size = 224
     rescale = 1.0  # Factor by which image is rescaled before cropping
     blur_probability = .1
     max_blur_radius = 3.
     data_statistics = None
-    split_file = "/path/to/partitioning.yml"  # Train, val and test partitions
+    split_file = "test_data/partitioning.yml"  # Train, val and test partitions
     subsample = 20000  # Maximum number of samples per class
     # Mapping of target class => original class
     class_groups = None  # Cannot use empty dict here because sacred will append

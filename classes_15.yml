@@ -1,0 +1,45 @@
+experiment_name: csf_classes_v02_Ex4
+
+num_classes: 15
+classes:
+  - Artifizielle Zelle
+  - Erythrophage
+  - Erythrozyt
+  - Hämatoidin
+  - Hämosiderophage
+  - Kernschatten
+  - Lymphozyt
+  - Mitose
+  - Monozyt
+  - Plasmazelle
+  - Tumor
+  - aktivierter Lymphozyt
+  - aktivierter Monozyt
+  - eosinophiler Granulozyt
+  - neutrophiler Granulozyt
+
+
+common_config:
+  group_during_training: true
+  model_name: "vit_base_patch16_224"
+
+  class_groups:
+    "MonoAct":
+      - aktivierter Monozyt
+      - Makrophagen
+    "Tumor":
+      - epitheliale Tumorzelle
+      - Leucaemia
+      - Lymphoma
+      - Melanomzellen
+      - Tumor
+  cp_weight: 0.8
+  lr: 0.00005
+  early_stopping_metrics: [ "bal_acc" ]
+  split_file: "test_data/split_file_sample.json"
+
+config_updates:
+  # Example: train with two different random initializations
+  '0':
+    seed: 928374
+

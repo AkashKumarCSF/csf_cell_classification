@@ -23,6 +23,8 @@ def score(y_true: np.array, logits: np.array, classes: List[str], class_groups):
         probs_grouped, y_true = group_probs(y_true, probs, classes,
                                             class_int_mapping,
                                             orig_to_grouped)
+
+        print('prob_grouped', np.sum(probs_grouped, axis=1))
         assert np.allclose(np.sum(probs_grouped, axis=1), 1)
         probs = probs_grouped
         classes = class_int_mapping.keys()
@@ -80,7 +82,7 @@ def confmat_df(conf_mat, labels=None):
 @torch.no_grad()
 def evaluate(model, dataloader, criterion, classes, cp_weight, _log,
              return_prediction=False, return_embedding=False):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = next(model.parameters()).device
     model = model.to(device)
     model.eval()
 
@@ -99,7 +101,7 @@ def evaluate(model, dataloader, criterion, classes, cp_weight, _log,
             data = data.to(device)
             target = target.to(device)
             if cp_weight is not None and cp_weight > 0:
-                output = model.forward_avg(data)
+                output = model.module.forward_avg(data)
             else:
                 output = model(data)
             if return_embedding:
@@ -137,7 +139,7 @@ def predict(model, dataloader, device):
         data = data.to(device)
         target = target.to(device)
         if isinstance(model, models.ConsistencyPriorModel):
-            output = model.forward_avg(data)
+            output = model.module.forward_avg(data)
         else:
             output = model(data)
         y_true.append(target.cpu().numpy())

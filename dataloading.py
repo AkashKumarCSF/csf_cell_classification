@@ -138,6 +138,7 @@ class GroupedImageFolder(ImageFolder):
         targets_subsampled = list()
         class_to_idx_subsampled = dict()
         ctr = 0
+        print("classes: ", classes)
         for class_, idx in self.class_to_idx.items():
             if class_ in classes:
                 class_to_idx_subsampled[class_] = ctr
