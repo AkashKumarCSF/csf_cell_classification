@@ -27,7 +27,7 @@ args = parser.parse_args()
 # === CONFIG ===
 config_path = "test_data/out/smk_configs/csf_classes_v02_Ex3/0.json"
 snapshot_path = "test_data/out/runs/Ex3/model-bal_acc.pt"
-split_file = "test_data/split_file.json"
+split_file = "test_data/split_file_sample.json"
 data_root = "/home/adminuser/backup/work_directory/zenodo/"
 group_samples = "test_data/supplementary_table_73.ods"
 
