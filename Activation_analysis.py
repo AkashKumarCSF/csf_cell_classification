@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from pathlib import Path
 from collections import Counter
@@ -92,11 +93,21 @@ for class_name, idx in class_to_idx.items():
 
 # === PCA ===
 print("Running PCA...")
-pca = PCA(n_components=2)
+pca = PCA(n_components=3)
 pca_result = pca.fit_transform(all_activations)
-
+print('PCA done.')
 # === PLOT PCA WITH TUMOR IN RED AND TRIANGLE ===
-plt.figure(figsize=(8, 6))
+# Create 3D plot
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Remove red from tab10 or rainbow colormap if present
+if len(class_names) <= 10:
+    # tab10 uses an RGB tuple, so remove any color very close to red
+    colormap = [c for c in plt.cm.tab10.colors if not np.allclose(c, (1.0, 0.0, 0.0), atol=0.1)]
+else:
+    full_colormap = plt.cm.rainbow(np.linspace(0, 1, len(class_names) + 1))
+    colormap = [c for c in full_colormap if not np.allclose(c[:3], (1.0, 0.0, 0.0), atol=0.1)]
 
 # Assign color for each class: red for Tumor, colormap for others
 fixed_colors = {}
@@ -105,28 +116,29 @@ colormap = plt.cm.tab10.colors if len(class_names) <= 10 else plt.cm.rainbow(np.
 color_idx = 0
 
 for class_name in class_names:
-    if class_name.lower() == "tumor":
-        fixed_colors[class_name] = tumor_color
-    else:
-        fixed_colors[class_name] = colormap[color_idx % len(colormap)]
-        color_idx += 1
+    #if class_name.lower() == "tumor":
+    #    fixed_colors[class_name] = tumor_color
+    #else:
+    fixed_colors[class_name] = colormap[color_idx % len(colormap)]
+    color_idx += 1
 
 # Plot each class
 for class_name, idx in class_to_idx.items():
     marker = '^' if class_name.lower() == "tumor" else 'o'
     mask = all_labels == idx
-    plt.scatter(
-        pca_result[mask, 0], pca_result[mask, 1],
+    ax.scatter(
+        pca_result[mask, 0], pca_result[mask, 1], pca_result[mask, 2],
         label=class_name,
         color=fixed_colors[class_name],
         alpha=0.6,
         marker=marker
     )
 
-plt.xlabel("PCA Component 1")
-plt.ylabel("PCA Component 2")
-plt.title("PCA of ViT Embeddings (CLS Token)")
-plt.legend()
+ax.set_xlabel("PCA Component 1")
+ax.set_ylabel("PCA Component 2")
+ax.set_zlabel("PCA Component 3")
+ax.set_title("3D PCA of ViT Embeddings (CLS Token)")
+ax.legend()
 plt.tight_layout()
+plt.savefig("Documents/Results/Ex3_3d_pca.png", dpi=300)
 plt.show()
-
